@@ -16,7 +16,11 @@ class AuthApp {
     init() {
         // 检查是否已登录
         if (this.token && this.currentUser) {
-            this.showMainPage();
+            // 如果已登录且当前在login页面，则跳转到index.html
+            if (window.location.pathname === '/login.html') {
+                window.location.href = '/index.html';
+                return;
+            }
         }
     }
 
@@ -93,8 +97,8 @@ class AuthApp {
             password: password
         });
 
-        if (result.success && result.data && result.data.token) {
-            this.token = result.data.token;
+        if (result.success && result.data && result.data.access_token) {
+            this.token = result.data.access_token;
             this.currentUser = result.data.user || { username: identifier };
             
             // 保存到本地存储
@@ -103,9 +107,9 @@ class AuthApp {
             
             this.showAlert('登录成功!', 'success');
             
-            // 延迟显示主页面
+            // 延迟跳转到主页面
             setTimeout(() => {
-                this.showMainPage();
+                window.location.href = '/index.html';
             }, 500);
         } else {
             const errorMsg = result.data?.message || result.error || '登录失败,请检查用户名和密码';
@@ -130,7 +134,7 @@ class AuthApp {
         
         // 返回登录页面
         setTimeout(() => {
-            this.showAuthPage();
+            window.location.href = '/login.html';
         }, 500);
     }
 
@@ -148,28 +152,6 @@ class AuthApp {
         }
 
         return result;
-    }
-
-    // 显示主页面
-    showMainPage() {
-        document.getElementById('auth-page').classList.add('d-none');
-        document.getElementById('main-page').classList.remove('d-none');
-        
-        // 更新用户名显示
-        const usernameSpan = document.getElementById('currentUsername');
-        if (usernameSpan && this.currentUser) {
-            usernameSpan.textContent = this.currentUser.username || '用户';
-        }
-    }
-
-    // 显示登录页面
-    showAuthPage() {
-        document.getElementById('auth-page').classList.remove('d-none');
-        document.getElementById('main-page').classList.add('d-none');
-        
-        // 清空表单
-        document.getElementById('loginForm').reset();
-        document.getElementById('registerForm').reset();
     }
 
     // 显示提示信息
@@ -263,7 +245,8 @@ function handleLogin(event) {
 // 处理登出
 function handleLogout() {
     if (confirm('确定要退出登录吗?')) {
-        app.logout();
+        const authApp = new AuthApp();
+        authApp.logout();
     }
 }
 
