@@ -1,0 +1,27 @@
+{
+    "name": "gin-data-visualization-web-ui",
+    "version": "1.0.0",
+    "description": "Go数据可视化平台前端界面",
+    "main": "index.html",
+    "scripts": {
+        "dev": "http-server -p 3000 -a localhost -c-1",
+        "start": "http-server -p 8080 -a 0.0.0.0",
+        "build": "echo '静态网站，无需构建'",
+        "test": "echo '暂无测试'",
+        "lint": "echo '暂无代码检查'",
+        "serve": "python -m http.server 8000"
+    },
+    "keywords": [
+        "gin",
+        "go",
+        "data-visualization",
+        "frontend",
+        "bootstrap",
+        "javascript"
+    ],
+    "author": "QX-hao",
+    "license": "MIT",
+    "devDependencies": {
+        "http-server": "^14.1.1"
+    }
+}

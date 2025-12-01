@@ -4,8 +4,10 @@
  */
 class AuthSystem {
     constructor() {
-        this.baseUrl = '';
-        this.apiBase = '/api/v1';
+        // 安全地获取后端配置
+        const config = this.getBackendConfig();
+        this.baseUrl = config.baseUrl;
+        this.apiBase = config.apiBase;
         this.token = localStorage.getItem('jwt_token') || '';
         this.currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
         this.isFormVisible = 'login'; // 'login' 或 'register'
@@ -13,13 +15,38 @@ class AuthSystem {
         this.init();
     }
 
-    init() {
-        // 从本地存储加载服务器地址
-        const savedUrl = localStorage.getItem('server_url');
-        if (savedUrl) {
-            this.baseUrl = savedUrl;
+    /**
+     * 安全地获取后端配置
+     * 避免在页面中暴露服务器地址
+     */
+    getBackendConfig() {
+        // 优先使用配置文件中的设置
+        if (window.getApiConfig) {
+            return window.getApiConfig();
         }
+        
+        // 如果没有配置文件，使用安全的默认配置
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1' ||
+                            window.location.port === '3000';
+        
+        if (isDevelopment) {
+            // 开发环境：使用完整后端URL解决代理问题
+            console.log('🔧 开发环境：使用完整后端URL');
+            return {
+                baseUrl: 'http://localhost:1234',
+                apiBase: '/api/v1'
+            };
+        } else {
+            // 生产环境：使用相对路径，前端和后端部署在同一域名下
+            return {
+                baseUrl: '',
+                apiBase: '/api/v1'
+            };
+        }
+    }
 
+    init() {
         // 如果已登录，重定向到首页
         if (this.token && this.currentUser) {
             this.redirectToDashboard();
@@ -276,14 +303,22 @@ class AuthSystem {
 
         try {
             resultElement.textContent = '检查中...';
-            const response = await this.callApi('/auth/check-username', 'POST', { username });
+            const response = await this.callApi('/auth/check-username', 'POST', { 
+                username: username 
+            });
             
-            if (response.success && response.data?.available) {
-                resultElement.innerHTML = '<span class="text-success">✓ 用户名可用</span>';
+            // 修改：根据后端实际响应格式解析数据
+            if (response.success && response.data?.code === 200) {
+                if (response.data.data?.available) {
+                    resultElement.innerHTML = '<span class="text-success">✓ 用户名可用</span>';
+                } else {
+                    resultElement.innerHTML = '<span class="text-danger">❌ 用户名已被占用</span>';
+                }
             } else {
-                resultElement.innerHTML = '<span class="text-danger">❌ 用户名已被占用</span>';
+                resultElement.innerHTML = '<span class="text-danger">❌ 检查失败</span>';
             }
         } catch (error) {
+            console.error('检查用户名失败:', error);
             resultElement.innerHTML = '<span class="text-warning">⚠ 检查失败</span>';
         }
     }
@@ -308,10 +343,15 @@ class AuthSystem {
             resultElement.textContent = '检查中...';
             const response = await this.callApi('/auth/check-email', 'POST', { email });
             
-            if (response.success && response.data?.available) {
-                resultElement.innerHTML = '<span class="text-success">✓ 邮箱可用</span>';
+            // 修改：根据后端实际响应格式解析数据
+            if (response.success && response.data?.code === 200) {
+                if (response.data.data?.available) {
+                    resultElement.innerHTML = '<span class="text-success">✓ 邮箱可用</span>';
+                } else {
+                    resultElement.innerHTML = '<span class="text-danger">❌ 邮箱已被注册</span>';
+                }
             } else {
-                resultElement.innerHTML = '<span class="text-danger">❌ 邮箱已被注册</span>';
+                resultElement.innerHTML = '<span class="text-danger">❌ 检查失败</span>';
             }
         } catch (error) {
             resultElement.innerHTML = '<span class="text-warning">⚠ 检查失败</span>';
@@ -440,10 +480,13 @@ class AuthSystem {
      */
     async callApi(endpoint, method = 'GET', data = null) {
         const url = `${this.baseUrl}${this.apiBase}${endpoint}`;
+        console.log(`🔍 API请求: ${method} ${url}`, data);
+        
         const options = {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         };
 
@@ -457,7 +500,14 @@ class AuthSystem {
 
         try {
             const response = await fetch(url, options);
+            console.log(`📡 API响应: ${response.status} ${response.statusText}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             const result = await response.json();
+            console.log('📦 API响应数据:', result);
             
             return {
                 success: response.ok,
@@ -465,6 +515,7 @@ class AuthSystem {
                 data: result
             };
         } catch (error) {
+            console.error('❌ API调用失败:', error);
             throw error;
         }
     }
@@ -549,3 +600,8 @@ document.addEventListener('DOMContentLoaded', () => {
     authSystem = new AuthSystem();
     authSystem.loadRememberedUsername();
 });
+
+
+
+
+
