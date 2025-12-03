@@ -2,7 +2,10 @@
  * 加密工具库
  * 使用 SHA-256 对密码进行哈希处理
  */
-class CryptoUtils {
+
+// 将 CryptoUtils 导出为默认模块
+// export default CryptoUtils;
+export class CryptoUtils {
     /**
      * SHA-256 哈希函数
      * @param {string} message - 要哈希的消息
@@ -96,3 +99,5 @@ class CryptoUtils {
         return emailRegex.test(email);
     }
 }
+
+
