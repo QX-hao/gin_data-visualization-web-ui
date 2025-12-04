@@ -1,86 +1,80 @@
-# Gin Data Visualization Web UI
+# vue-manage-system
 
-基于 Vue 3 + Vite + Pinia + Element Plus 的后台管理系统前端项目，配合 Go (Gin) 后端实现完整的数据可视化与管理功能。
+  <a href="https://github.com/lin-xin/vue-manage-system/releases">
+    <img src="https://img.shields.io/github/release/lin-xin/vue-manage-system.svg" alt="GitHub release">
+  </a>
+   <a href="https://github.com/lin-xin/vue-manage-system/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/mashape/apistatus.svg" alt="license">
+  </a>
 
-## 项目简介
+基于 Vue3 + pinia + Element Plus 的后台管理系统解决方案。[线上演示](https://lin-xin.github.io/example/vue-manage-system/)
 
-本项目是 [vue-manage-system](https://github.com/lin-xin/vue-manage-system) 的定制版本，主要用于对接 `gin_data-visualization` 后端服务。项目集成了丰富的前端组件和图表库，提供了一套完整的后台管理解决方案。
+> Vue2 版本请看 [tag-V4.2.0](https://github.com/lin-xin/vue-manage-system/tree/V4.2.0)，带后台功能请看 [tsrpc-manage-system](https://github.com/lin-xin/tsrpc-manage-system)
 
-## 功能特性
+[文档地址](https://lin-xin.github.io/example/vuems-doc/)
+[English document](https://github.com/lin-xin/manage-system/blob/master/README_EN.md)
 
-*   **用户管理**：登录、注册、个人中心、用户/角色/菜单管理。
-*   **数据可视化**：集成 ECharts 和 Schart，支持多种图表展示。
-*   **表格操作**：支持基础表格、可编辑表格、Excel 导入导出。
-*   **表单组件**：集成富文本编辑器 (WangEditor)、Markdown 编辑器。
-*   **系统功能**：支持主题切换、全屏、国际化（部分）、标签页导航。
-*   **权限控制**：基于角色的权限管理 (RBAC) 实现。
+## 赞助商
 
-## 技术栈
+### 好问
 
-*   **核心框架**: Vue 3
-*   **构建工具**: Vite
-*   **UI 组件库**: Element Plus
-*   **状态管理**: Pinia
-*   **路由管理**: Vue Router
-*   **HTTP 客户端**: Axios
-*   **图表库**: ECharts, Vue-Schart
-*   **语言**: TypeScript
+[<img src="https://static.bestqa.net/logo/bestqa_haowen.png" width="220" height="100">](https://www.bestqa.net/home/index.html)
 
-## 目录结构说明
+专业问卷服务，一对一客服，按需定制
 
-```text
-src/
-├── api/                # 后端 API 接口定义
-├── assets/             # 静态资源文件 (图片, 样式等)
-├── components/         # 公共组件 (Header, Sidebar, Tags 等)
-├── router/             # 路由配置
-├── store/              # Pinia 状态管理 (用户状态, 权限, 标签页等)
-├── utils/              # 工具函数 (Axios 封装, 格式化等)
-├── views/              # 页面视图组件
-│   ├── chart/          # 图表页面
-│   ├── dashboard.vue   # 系统首页
-│   ├── element/        # Element Plus 示例组件
-│   ├── pages/          # 通用页面 (登录, 注册, 404 等)
-│   ├── system/         # 系统管理页面 (用户, 角色, 菜单)
-│   └── table/          # 表格相关页面
-└── App.vue             # 根组件
+## 支持作者
+
+请作者喝杯咖啡吧！(微信号：linxin_20)
+
+![微信扫一扫](https://lin-xin.github.io/images/weixin.jpg)
+
+## 前言
+
+该方案作为一套多功能的后台框架模板，适用于绝大部分的后台管理系统开发。基于 Vue3 + pinia + typescript，引用 Element Plus 组件库，方便开发。实现逻辑简单，适合外包项目，快速交付。
+
+## 功能
+
+-   [x] Element Plus
+-   [x] vite 3
+-   [x] pinia
+-   [x] typescript
+-   [x] 登录/注册
+-   [x] Dashboard
+-   [x] 表格/表单
+-   [x] 图表 :bar_chart:
+-   [x] 富文本/markdown 编辑器
+-   [x] 图片拖拽/裁剪上传
+-   [x] 权限管理
+-   [x] 三级菜单
+-   [x] 自定义图标
+-   [x] 主题切换
+
+## 安装步骤
+
+> 因为使用 vite3，node 版本需要 14.18+
+
 ```
+git clone https://github.com/lin-xin/vue-manage-system.git      // 把模板下载到本地
+cd vue-manage-system    // 进入模板目录
+npm install         // 安装项目依赖，等待安装完成之后，安装失败可用 cnpm 或 yarn
 
-## 快速开始
-
-### 1. 安装依赖
-
-确保本地已安装 Node.js (推荐 v16+)。
-
-```bash
-npm install
-```
-
-### 2. 开发环境运行
-
-启动开发服务器（默认端口可能为 5173 或 8080）：
-
-```bash
+// 运行
 npm run dev
-```
 
-### 3. 构建生产环境
-
-```bash
+// 执行构建命令，生成的dist文件夹放在服务器下即可访问
 npm run build
 ```
 
-## 后端对接
+## 项目截图
 
-本项目默认配置对接本地 Go 后端服务。
+### 首页
 
-*   **API Base URL**: `http://localhost:1234/api/v1`
-*   **配置文件**: `src/utils/request.ts`
+![Image text](https://github.com/lin-xin/manage-system/raw/master/screenshots/wms1.png)
 
-如果需要修改后端地址，请更新 `src/utils/request.ts` 中的 `baseURL` 配置。
+### 登录
 
----
+![Image text](https://github.com/lin-xin/manage-system/raw/master/screenshots/wms3.png)
 
-## 原项目鸣谢
+## License
 
-本项目基于 [vue-manage-system](https://github.com/lin-xin/vue-manage-system) 二次开发。感谢原作者提供的优秀模板。
+[MIT](https://github.com/lin-xin/vue-manage-system/blob/master/LICENSE)

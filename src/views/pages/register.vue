@@ -52,8 +52,6 @@ import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import { Register } from '@/types/user';
-import CryptoUtils from '@/../static/js/crypto-utils.js';
-// import CryptoUtils from '../../../static/js/crypto-utils.js';
 
 const router = useRouter();
 const param = reactive<Register>({
@@ -76,31 +74,12 @@ const rules: FormRules = {
 const register = ref<FormInstance>();
 const submitForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return;
-    formEl.validate(async (valid: boolean) => {
+    formEl.validate((valid: boolean) => {
         if (valid) {
-            // 对密码进行SHA-256加密
-            // 使用立即执行的异步函数来处理加密
-            try {
-                // const CryptoUtilsModule = await import('@/../static/js/crypto-utils.js');
-                // const CryptoUtils = CryptoUtilsModule.default;
-                const hashedPassword = await CryptoUtils.hashPassword(param.password);
-                console.log('原始密码:', param.password)
-                console.log('哈希后密码:', hashedPassword)
-
-                // 发送给后端
-                // await api.registerUser(
-                //     param.username,
-                //     hashedPassword,
-                //     param.email
-                // )
-
-                ElMessage.success('注册成功，请登录');
-                router.push('/login');
-            } catch (error) {
-                console.error('密码加密失败:', error);
-            }
+            ElMessage.success('注册成功，请登录');
+            router.push('/login');
         } else {
-            ElMessage.error('注册失败');
+            return false;
         }
     });
 };
