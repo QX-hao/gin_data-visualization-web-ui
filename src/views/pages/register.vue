@@ -36,9 +36,10 @@
                                 <Lock />
                             </el-icon>
                         </template>
+                        
                     </el-input>
                 </el-form-item>
-                <el-button class="login-btn" type="primary" size="large" @click="submitForm(register)">注册</el-button>
+                <el-button class="login-btn" type="primary" size="large" @click="submitForm(register)">{{loading ? '注册中' : '注册'}}</el-button>
                 <p class="login-text">
                     已有账号，<el-link type="primary" @click="$router.push('/login')">立即登录</el-link>
                 </p>
@@ -52,8 +53,12 @@ import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus';
 import { Register } from '@/types/user';
+import { sha256 } from '@/utils';
+import { registerApi, checkUsernameApi, checkEmailApi } from '@/api';
+
 
 const router = useRouter();
+const loading = ref(false);
 const param = reactive<Register>({
     username: '',
     password: '',
@@ -72,12 +77,97 @@ const rules: FormRules = {
     email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
 };
 const register = ref<FormInstance>();
+
+// 验证函数
+const validateForm = async () => {
+    // 1. 用户名验证
+    if (param.username.length < 3) {
+        ElMessage.error('用户名至少3个字符');
+        return false;
+    }
+
+    // 2. 验证邮箱
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(param.email)) {
+        ElMessage.error('请输入正确的邮箱格式');
+        return false;
+    }
+
+    // 3.实时验证
+    try {
+        const [usernameResult, emailResult] = await Promise.all([
+            checkUsernameApi({ username: param.username }),
+            checkEmailApi({ email: param.email }),
+        ]);
+
+        // console.log('用户名验证结果:', usernameResult);
+        // console.log('邮箱验证结果:', emailResult);
+
+        if (!usernameResult.data?.data?.available) {
+            ElMessage.warning('用户名已存在');
+            return false;
+        }
+        
+        if (!emailResult.data?.data?.available) {
+            ElMessage.warning('邮箱已被注册');
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        // 处理API调用错误
+        console.error('验证失败:', error);
+        return true; // 验证失败也允许提交，由后端最终验证
+    }
+}
+
 const submitForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return;
-    formEl.validate((valid: boolean) => {
+    formEl.validate(async (valid: boolean) => {
         if (valid) {
-            ElMessage.success('注册成功，请登录');
-            router.push('/login');
+            // 防止反复提交
+            if (loading.value) return;
+            loading.value = true;
+
+            try {
+                const canSubmit = await validateForm();
+                if (!canSubmit) {
+                    loading.value = false;
+                    return;
+                };
+
+                const encryptedPassword = await sha256(param.password);
+                console.log('原始密码:', param.password);
+                console.log('加密后的密码:', encryptedPassword);
+
+                // 调用注册接口
+                const result = await registerApi({
+                    username: param.username,
+                    password: encryptedPassword,
+                    email: param.email,
+                });
+
+                // 处理注册响应
+                if (result.status === 201 || result.data?.code === 201) {
+                    // 注册成功
+                    ElMessage.success(result.message || '注册成功，请登录');
+                    router.push('/login');
+                } else {
+                    // 注册失败
+                    // 检查API返回的错误消息
+                    if (result.data?.message) {
+                        ElMessage.error(result.data?.message);
+                    } else {
+                        ElMessage.error(result.message || '注册失败，请重试');
+                    }
+                }
+            } catch (error) {
+                // 网络错误或API调用失败
+                ElMessage.error('网络错误，请检查网络连接或稍后重试');
+                console.error('注册失败:', error);
+            } finally {
+                // 无论成功或失败，都重置loading状态
+                loading.value = false;
+            }
         } else {
             return false;
         }

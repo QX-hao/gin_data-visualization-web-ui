@@ -12,3 +12,5 @@ export const mix = (color1: string, color2: string, weight: number = 0.5): strin
     }
     return color;
 };
+
+export { sha256, isEncryptionSupported } from './encrypt';

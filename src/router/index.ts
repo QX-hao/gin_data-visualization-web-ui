@@ -7,7 +7,7 @@ import 'nprogress/nprogress.css';
 const routes: RouteRecordRaw[] = [
     {
         path: '/',
-        redirect: '/loggin',
+        redirect: '/login',
     },
     {
         path: '/',

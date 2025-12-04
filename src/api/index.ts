@@ -1,5 +1,7 @@
 import request from '../utils/request';
 
+export * from './user';
+
 export const fetchData = () => {
     return request({
         url: './mock/table.json',

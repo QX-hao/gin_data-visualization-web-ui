@@ -1,80 +1,204 @@
-# vue-manage-system
+# gin_data-visualization-web-ui
 
-  <a href="https://github.com/lin-xin/vue-manage-system/releases">
-    <img src="https://img.shields.io/github/release/lin-xin/vue-manage-system.svg" alt="GitHub release">
-  </a>
-   <a href="https://github.com/lin-xin/vue-manage-system/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/mashape/apistatus.svg" alt="license">
-  </a>
+基于 Vue3 + TypeScript + Element Plus + Gin 的数据可视化后台管理系统前端项目。
 
-基于 Vue3 + pinia + Element Plus 的后台管理系统解决方案。[线上演示](https://lin-xin.github.io/example/vue-manage-system/)
+## 项目概述
 
-> Vue2 版本请看 [tag-V4.2.0](https://github.com/lin-xin/vue-manage-system/tree/V4.2.0)，带后台功能请看 [tsrpc-manage-system](https://github.com/lin-xin/tsrpc-manage-system)
+gin_data-visualization-web-ui 是一个现代化的数据可视化后台管理系统前端项目，采用 Vue 3 组合式 API 和 TypeScript 开发，结合 Element Plus UI 组件库，提供丰富的图表展示和用户管理功能。
 
-[文档地址](https://lin-xin.github.io/example/vuems-doc/)
-[English document](https://github.com/lin-xin/manage-system/blob/master/README_EN.md)
+## 技术栈
 
-## 赞助商
+- **前端框架**: Vue 3 + TypeScript
+- **UI组件库**: Element Plus
+- **状态管理**: Pinia
+- **路由管理**: Vue Router
+- **构建工具**: Vite 3
+- **HTTP客户端**: Axios
+- **图表库**: ECharts + Vue-Echarts
+- **富文本编辑器**: WangEditor
 
-### 好问
-
-[<img src="https://static.bestqa.net/logo/bestqa_haowen.png" width="220" height="100">](https://www.bestqa.net/home/index.html)
-
-专业问卷服务，一对一客服，按需定制
-
-## 支持作者
-
-请作者喝杯咖啡吧！(微信号：linxin_20)
-
-![微信扫一扫](https://lin-xin.github.io/images/weixin.jpg)
-
-## 前言
-
-该方案作为一套多功能的后台框架模板，适用于绝大部分的后台管理系统开发。基于 Vue3 + pinia + typescript，引用 Element Plus 组件库，方便开发。实现逻辑简单，适合外包项目，快速交付。
-
-## 功能
-
--   [x] Element Plus
--   [x] vite 3
--   [x] pinia
--   [x] typescript
--   [x] 登录/注册
--   [x] Dashboard
--   [x] 表格/表单
--   [x] 图表 :bar_chart:
--   [x] 富文本/markdown 编辑器
--   [x] 图片拖拽/裁剪上传
--   [x] 权限管理
--   [x] 三级菜单
--   [x] 自定义图标
--   [x] 主题切换
-
-## 安装步骤
-
-> 因为使用 vite3，node 版本需要 14.18+
+## 项目结构
 
 ```
-git clone https://github.com/lin-xin/vue-manage-system.git      // 把模板下载到本地
-cd vue-manage-system    // 进入模板目录
-npm install         // 安装项目依赖，等待安装完成之后，安装失败可用 cnpm 或 yarn
+gin_data-visualization-web-ui/
+├── src/                           # 源代码目录
+│   ├── api/                       # API 接口管理
+│   │   ├── user.ts               # 用户相关API
+│   │   └── index.ts              # API统一导出
+│   ├── assets/                   # 静态资源
+│   │   ├── img/                  # 图片资源
+│   │   │   ├── logo.svg          # 项目Logo
+│   │   │   └── login-bg.jpg      # 登录页背景图
+│   │   └── css/                  # 样式文件
+│   ├── components/               # 公共组件
+│   │   ├── charts/               # 图表组件
+│   │   ├── editor/               # 编辑器组件
+│   │   ├── upload/               # 上传组件
+│   │   └── layout/               # 布局组件
+│   ├── router/                   # 路由配置
+│   │   └── index.ts              # 路由定义
+│   ├── store/                    # 状态管理
+│   │   └── user.ts               # 用户状态管理
+│   ├── types/                    # TypeScript类型定义
+│   │   ├── user.ts               # 用户相关类型
+│   │   └── index.ts              # 类型统一导出
+│   ├── utils/                    # 工具函数
+│   │   ├── index.ts              # 工具函数统一导出
+│   │   ├── encrypt.ts            # 加密工具函数
+│   │   ├── request.ts            # HTTP请求封装
+│   │   └── china.ts              # 中国地区数据
+│   ├── views/                    # 页面组件
+│   │   ├── pages/                # 页面级组件
+│   │   │   ├── login.vue         # 登录页面
+│   │   │   ├── register.vue      # 注册页面
+│   │   │   └── dashboard.vue     # 仪表板页面
+│   │   └── layout/               # 布局页面
+│   ├── App.vue                   # 应用根组件
+│   ├── main.ts                   # 应用入口文件
+│   └── vite-env.d.ts             # Vite类型声明
+├── public/                       # 公共静态资源
+├── node_modules/                 # 项目依赖包
+├── index.html                    # HTML入口文件
+├── package.json                  # 项目配置和依赖
+├── vite.config.ts               # Vite配置文件
+├── tsconfig.json                # TypeScript配置
+└── README.md                    # 项目说明文档
+```
 
-// 运行
+## 目录详细说明
+
+### src/ 源代码目录
+
+#### api/ - API接口管理
+- **user.ts**: 用户相关的API接口定义（登录、注册、用户信息等）
+- **index.ts**: API接口的统一导出和管理
+
+#### assets/ - 静态资源
+- **img/**: 图片资源目录
+  - logo.svg: 项目Logo图标
+  - login-bg.jpg: 登录页面背景图片
+- **css/**: 样式文件目录
+
+#### components/ - 公共组件
+- **charts/**: 图表相关组件，基于ECharts封装
+- **editor/**: 富文本和Markdown编辑器组件
+- **upload/**: 文件上传组件，支持拖拽和裁剪
+- **layout/**: 布局相关组件
+
+#### router/ - 路由配置
+- **index.ts**: Vue Router路由配置，定义页面路由和权限控制
+
+#### store/ - 状态管理
+- **user.ts**: 用户状态管理，包括用户信息、登录状态等
+
+#### types/ - 类型定义
+- **user.ts**: 用户相关的TypeScript类型定义
+- **index.ts**: 类型统一导出文件
+
+#### utils/ - 工具函数
+- **index.ts**: 工具函数统一导出文件
+- **encrypt.ts**: 加密工具函数，包含SHA-256密码加密功能
+- **request.ts**: HTTP请求封装，包含拦截器和错误处理
+- **china.ts**: 中国地区数据工具函数
+
+#### views/ - 页面组件
+- **pages/**: 页面级组件
+  - login.vue: 用户登录页面
+  - register.vue: 用户注册页面（包含密码SHA-256加密功能）
+  - dashboard.vue: 数据仪表板页面
+- **layout/**: 布局页面组件
+
+### 根目录文件
+
+- **App.vue**: Vue应用根组件，包含全局布局和路由视图
+- **main.ts**: 应用入口文件，初始化Vue应用和全局配置
+- **vite-env.d.ts**: Vite环境类型声明文件
+- **index.html**: HTML入口文件
+- **package.json**: 项目配置和依赖管理
+- **vite.config.ts**: Vite构建工具配置
+- **tsconfig.json**: TypeScript编译配置
+
+## 主要功能特性
+
+### 用户管理
+- 用户注册（前端SHA-256加密 + 后端bcrypt加密）
+- 用户登录和权限验证
+- 用户信息管理
+
+### 数据可视化
+- 丰富的图表展示（柱状图、折线图、饼图等）
+- 实时数据更新
+- 图表自定义配置
+
+### 系统功能
+- 响应式布局设计
+- 主题切换功能
+- 权限管理系统
+- 文件上传和管理
+
+## 安装和运行
+
+### 环境要求
+- Node.js 14.18+ 
+- npm 6.0+
+
+### 安装步骤
+
+```bash
+# 克隆项目
+git clone <项目地址>
+
+# 进入项目目录
+cd gin_data-visualization-web-ui
+
+# 安装依赖
+npm install
+
+# 开发模式运行
 npm run dev
 
-// 执行构建命令，生成的dist文件夹放在服务器下即可访问
+# 构建生产版本
 npm run build
+
+# 预览构建结果
+npm run preview
 ```
 
-## 项目截图
+### 开发服务器
+项目启动后，访问 http://localhost:5173 查看应用。
 
-### 首页
+## 安全特性
 
-![Image text](https://github.com/lin-xin/manage-system/raw/master/screenshots/wms1.png)
+### 密码加密流程
+1. **前端加密**: 使用SHA-256算法对用户密码进行加密
+2. **安全传输**: 加密后的密码传输到后端
+3. **后端存储**: 后端使用bcrypt算法再次加密存储
 
-### 登录
+### 加密工具
+- 位于 `src/utils/encrypt.ts`
+- 使用Web Crypto API实现安全的SHA-256加密
+- 支持浏览器兼容性检测
 
-![Image text](https://github.com/lin-xin/manage-system/raw/master/screenshots/wms3.png)
+## 开发规范
 
-## License
+### 代码规范
+- 使用TypeScript进行类型安全开发
+- 遵循Vue 3组合式API规范
+- 使用ESLint + Prettier进行代码格式化
 
-[MIT](https://github.com/lin-xin/vue-manage-system/blob/master/LICENSE)
+### 目录规范
+- 组件采用PascalCase命名
+- 工具函数采用camelCase命名
+- 页面文件使用kebab-case命名
+
+## 部署说明
+
+### 构建生产版本
+```bash
+npm run build
+```
+构建完成后，`dist`目录包含所有静态资源文件。
+
+### 服务器部署
+将`dist`目录下的文件部署到Web服务器（如Nginx、Apache等）。
+
