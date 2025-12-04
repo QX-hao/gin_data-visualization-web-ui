@@ -7,7 +7,7 @@
             </div>
             <el-form :model="param" :rules="rules" ref="login" size="large">
                 <el-form-item prop="username">
-                    <el-input v-model="param.username" placeholder="用户名">
+                    <el-input v-model="param.username" placeholder="用户名/邮箱">
                         <template #prepend>
                             <el-icon>
                                 <User />
@@ -50,6 +50,8 @@ import { usePermissStore } from '@/store/permiss';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus';
+import {sha256} from '@/utils';
+import { loginApi } from '@/api/';
 
 interface LoginInfo {
     username: string;
@@ -80,17 +82,44 @@ const permiss = usePermissStore();
 const login = ref<FormInstance>();
 const submitForm = (formEl: FormInstance | undefined) => {
     if (!formEl) return;
-    formEl.validate((valid: boolean) => {
+    formEl.validate(async (valid: boolean) => {
         if (valid) {
-            ElMessage.success('登录成功');
-            localStorage.setItem('vuems_name', param.username);
-            const keys = permiss.defaultList[param.username == 'admin' ? 'admin' : 'user'];
-            permiss.handleSet(keys);
-            router.push('/dashboard');
-            if (checked.value) {
-                localStorage.setItem('login-param', JSON.stringify(param));
-            } else {
-                localStorage.removeItem('login-param');
+            
+            try {
+                const encryptedPassword = await sha256(param.password);
+                console.log('原始密码:', param.password);
+                console.log('加密后的密码:', encryptedPassword);
+                
+                // 调用登录接口
+                const result = await loginApi({
+                    username: param.username,
+                    password: encryptedPassword,
+                });
+
+                console.log('登录接口返回:', result);
+
+                if (result.status === 200 ) {
+                    ElMessage.success('登录成功')
+                    localStorage.setItem('token', result.data?.data?.access_token);
+                    localStorage.setItem('vuems_name', param.username);
+                    // const keys = permiss.defaultList[param.username == 'admin' ? 'admin' : 'user'];
+                    // permiss.handleSet(keys);
+                    router.push('/dashboard');
+
+                    // 记住密码
+                    if (checked.value) {
+                        localStorage.setItem('login-param', JSON.stringify(param));
+                    } else {
+                        localStorage.removeItem('login-param');
+                    }
+
+                } else if (result.status === 401) {
+                    ElMessage.error("登录失败:",result.data?.message);
+                }
+            } catch (error) {
+                console.error("登录请求失败: ", error.message);
+                ElMessage.error('登录请求失败，请检查网络或联系管理员');
+                return false;
             }
         } else {
             ElMessage.error('登录失败');

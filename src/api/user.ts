@@ -21,7 +21,7 @@ export const registerApi = (params: Register): Promise<any> => {
  */
 export const loginApi = (params: { username: string; password: string }): Promise<any> => {
     return request({
-        url: '/api/user/login',
+        url: '/api/v1/auth/login',
         method: 'post',
         data: params
     });
