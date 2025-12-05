@@ -3,7 +3,7 @@
         <div class="login-container">
             <div class="login-header">
                 <img class="logo mr10" src="../../assets/img/logo.svg" alt="" />
-                <div class="login-title">后台管理系统</div>
+                <div class="login-title">汽车数据平台</div>
             </div>
             <el-form :model="param" :rules="rules" ref="login" size="large">
                 <el-form-item prop="username">
@@ -34,7 +34,7 @@
                     <el-link type="primary" @click="$router.push('/reset-pwd')">忘记密码</el-link>
                 </div>
                 <el-button class="login-btn" type="primary" size="large" @click="submitForm(login)">登录</el-button>
-                <p class="login-tips">Tips : 用户名和密码随便填。</p>
+                <!-- <p class="login-tips">Tips : 用户名和密码随便填。</p> -->
                 <p class="login-text">
                     没有账号？<el-link type="primary" @click="$router.push('/register')">立即注册</el-link>
                 </p>
@@ -114,7 +114,8 @@ const submitForm = (formEl: FormInstance | undefined) => {
                     }
 
                 } else if (result.status === 401) {
-                    ElMessage.error("登录失败:",result.data?.message);
+                    // console.log("401:",result.data?.message);
+                    ElMessage.error("登录失败:" + result.data?.message);
                 }
             } catch (error) {
                 console.error("登录请求失败: ", error.message);
@@ -139,7 +140,8 @@ tabs.clearTabs();
     justify-content: center;
     width: 100%;
     height: 100vh;
-    background: url(../../assets/img/login-bg.jpg) center/cover no-repeat;
+    /* background: url(../../assets/img/login-bg.jpg) center/cover no-repeat; */
+    background: url(../../assets/img/login-bg1.png) center/cover no-repeat;
 }
 
 .login-header {
