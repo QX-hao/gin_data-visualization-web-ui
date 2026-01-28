@@ -87,8 +87,8 @@ const submitForm = (formEl: FormInstance | undefined) => {
             
             try {
                 const encryptedPassword = await sha256(param.password);
-                console.log('原始密码:', param.password);
-                console.log('加密后的密码:', encryptedPassword);
+                // console.log('原始密码:', param.password);
+                // console.log('加密后的密码:', encryptedPassword);
                 
                 // 调用登录接口
                 const result = await loginApi({
@@ -96,7 +96,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
                     password: encryptedPassword,
                 });
 
-                console.log('登录接口返回:', result);
+                // console.log('登录接口返回:', result);
 
                 if (result.status === 200 ) {
                     ElMessage.success('登录成功')

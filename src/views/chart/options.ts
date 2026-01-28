@@ -26,6 +26,105 @@ export const barOptions = {
     ],
 };
 
+// 生成品牌销售对比图表配置（Top 20 vs Last 20）
+export const getBrandSalesComparisonOptions = (topBrandData: { brand_name: string; total_sales: number }[], lastBrandData: { brand_name: string; total_sales: number }[]) => {
+    // 处理Top 20品牌数据
+    const topBrands = topBrandData.map(item => ({
+        name: item.brand_name,
+        value: item.total_sales
+    }));
+    
+    // 处理Last 20品牌数据
+    const lastBrands = lastBrandData.map(item => ({
+        name: item.brand_name,
+        value: item.total_sales
+    }));
+
+    return {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function(params: any) {
+                let result = params[0].name + '<br/>';
+                params.forEach((item: any) => {
+                    if (item.value !== undefined) {
+                        result += item.marker + item.seriesName + ': ' + item.value + '<br/>';
+                    }
+                });
+                return result;
+            }
+        },
+        legend: {
+            data: ['Top 20品牌', 'Last 20品牌'],
+            top: '1%',
+            textStyle: {
+                color: '#333'
+            }
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            top: '12%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'value',
+            axisLabel: {
+                color: '#666'
+            }
+        },
+        yAxis: {
+            type: 'category',
+            data: topBrands.map(item => item.name),
+            axisLabel: {
+                color: '#666',
+                formatter: function(value: string) {
+                    // 品牌名称过长时截断显示
+                    return value.length > 6 ? value.substring(0, 6) + '...' : value;
+                }
+            }
+        },
+        color: ['#009688', '#f44336'],
+        series: [
+            {
+                name: 'Top 20品牌',
+                type: 'bar',
+                data: topBrands.map(item => item.value),
+                itemStyle: {
+                    color: new graphic.LinearGradient(0, 0, 1, 0, [
+                        { offset: 0, color: '#009688' },
+                        { offset: 1, color: '#4DB6AC' }
+                    ])
+                },
+                label: {
+                    show: true,
+                    position: 'right',
+                    formatter: '{c}'
+                }
+            },
+            {
+                name: 'Last 20品牌',
+                type: 'bar',
+                data: lastBrands.map(item => item.value),
+                itemStyle: {
+                    color: new graphic.LinearGradient(0, 0, 1, 0, [
+                        { offset: 0, color: '#f44336' },
+                        { offset: 1, color: '#EF9A9A' }
+                    ])
+                },
+                label: {
+                    show: true,
+                    position: 'right',
+                    formatter: '{c}'
+                }
+            }
+        ]
+    };
+};
+
 export const lineOptions = {
     tooltip: {
         trigger: 'axis',
@@ -266,6 +365,55 @@ export const dashOpt1 = {
     ],
 };
 
+// 生成能源分布图配置（动态数据）
+export const getEnergyDistributionOptions = (energyData: { energy_name: string; count: number }[]) => {
+    // 将后端数据转换为ECharts需要的格式
+    // console.log('123456');
+    // console.log(energyData);
+    const chartData = energyData.map(item => ({
+        value: item.count,
+        name: item.energy_name
+    }));
+
+    return {
+        legend: {
+            bottom: '1%',
+            left: 'center',
+        },
+        color: ['#3f51b5', '#009688', '#f44336', '#00bcd4', '#1ABC9C', '#e9a745', '#f25e43', '#64d572'],
+        tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        series: [
+            {
+                name: '能源类型分布',
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                },
+                label: {
+                    show: true,
+                    formatter: '{b}: {c}'
+                },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: 16,
+                        fontWeight: 'bold'
+                    }
+                },
+                data: chartData,
+            },
+        ],
+    };
+};
+
+// 保留原有的静态配置（兼容性）
 export const dashOpt2 = {
     legend: {
         bottom: '1%',
@@ -293,18 +441,94 @@ export const dashOpt2 = {
     ],
 };
 
+// 生成城市销售地图配置（动态数据）- 使用自定义地图
+export const getCitySalesOptions = (cityData: { city: string; sales: number }[]) => {
+    // 将后端数据转换为ECharts需要的格式
+    const chartData = cityData.map(item => ({
+        name: item.city,
+        value: item.sales
+    }));
+
+    return {
+        tooltip: {
+            trigger: 'item',
+            formatter: function(params: any) {
+                // 自定义tooltip显示格式
+                return `${params.name}<br/>销售额: ${params.value}`;
+            }
+        },
+        visualMap: {
+            show: true,
+            type: 'continuous',
+            min: Math.min(...cityData.map(item => item.sales)),
+            max: Math.max(...cityData.map(item => item.sales)),
+            text: ['高销售额', '低销售额'],
+            realtime: false,
+            calculable: true,
+            inRange: {
+                color: ['#FFD700', '#FFA500', '#FF6347', '#FF4500', '#FF0000'],
+            },
+            textStyle: {
+                color: '#333',
+                fontSize: 12
+            },
+            orient: 'vertical',
+            right: '3%',
+            top: 'center'
+        },
+        series: [
+            {
+                name: '城市销售额',
+                type: 'map',
+                map: 'china', // 使用自定义地图名称
+                roam: true, // 允许缩放和平移
+                center: [105, 36], // 设置地图中心点
+                zoom: 1.2, // 设置初始缩放级别
+                data: chartData,
+                emphasis: {
+                    label: {
+                        show: true,
+                        color: '#fff',
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                    },
+                    itemStyle: {
+                        areaColor: '#FF4500'
+                    }
+                },
+                itemStyle: {
+                    areaColor: '#87CEEB',
+                    borderColor: '#4169E1',
+                    borderWidth: 0.8
+                },
+                label: {
+                    formatter: '{b}',
+                    color: '#333',
+                    fontSize: 9, // 减小字体大小
+                    fontWeight: 'normal',
+                    show: true, // 默认显示标签
+                    emphasis: {
+                        show: true, // 鼠标悬停时显示标签
+                        fontSize: 10,
+                        fontWeight: 'bold'
+                    }
+                },
+                labelLayout: {
+                    // 使用ECharts内置的标签密度控制
+                    hideOverlap: true, // 隐藏重叠的标签
+                    moveOverlap: 'shiftY', // 移动重叠的标签
+                    draggable: false, // 标签不可拖动
+                    maxCount: 10 // 限制最大显示标签数量，避免过度拥挤
+                }
+            },
+        ],
+    };
+};
+
+// 保留原有的静态配置（兼容性）
 export const mapOptions = {
     tooltip: {
         trigger: 'item',
-    },
-    geo: {
-        map: 'china',
-        roam: false,
-        emphasis: {
-            label: {
-                show: false,
-            },
-        },
     },
     visualMap: {
         show: false,
@@ -318,11 +542,10 @@ export const mapOptions = {
     },
     series: [
         {
-            geoIndex: 0,
             name: '地域分布',
             type: 'map',
-            coordinateSystem: 'geo',
             map: 'china',
+            roam: false,
             data: [
                 { name: '北京', value: 100 },
                 { name: '上海', value: 100 },
@@ -340,6 +563,9 @@ export const mapOptions = {
                 { name: '云南', value: 20 },
                 { name: '甘肃', value: 20 },
             ],
+            label: {
+                show: false, // 静态地图默认不显示标签
+            }
         },
     ],
 };

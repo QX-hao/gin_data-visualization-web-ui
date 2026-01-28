@@ -57,7 +57,10 @@ import { CanvasRenderer } from 'echarts/renderers';
 import VChart from 'vue-echarts';
 import 'echarts-wordcloud';
 import { barOptions, lineOptions, pieOptions, ringOptions, wordOptions, mapOptions } from './options';
-import chinaMap from '@/utils/china';
+import { ref, onMounted } from 'vue';
+// 导入本地地图数据
+import chinaGeoJSON from '../../utils/chinaCitys.geojson?raw';
+
 use([
     CanvasRenderer,
     BarChart,
@@ -70,7 +73,23 @@ use([
     TitleComponent,
     VisualMapComponent,
 ]);
-registerMap('china', chinaMap);
+
+// 使用本地地图数据
+const mapData = ref(null);
+
+onMounted(() => {
+    try {
+        // 使用本地导入的地图数据
+        // 解析GeoJSON字符串为对象
+        const geoJSONData = JSON.parse(chinaGeoJSON);
+        // 注册地图
+        registerMap('china', geoJSONData);
+        mapData.value = geoJSONData;
+        console.log('本地地图数据加载成功');
+    } catch (error) {
+        console.error('加载本地地图数据失败:', error);
+    }
+});
 </script>
 
 <style scoped>

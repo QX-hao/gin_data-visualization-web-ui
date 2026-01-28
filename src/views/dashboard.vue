@@ -51,19 +51,29 @@
             <el-col :span="18">
                 <el-card shadow="hover">
                     <div class="card-header">
-                        <p class="card-header-title">订单动态</p>
-                        <p class="card-header-desc">最近一周订单状态，包括订单成交量和订单退货量</p>
+                        <p class="card-header-title">品牌销售对比</p>
+                        <p class="card-header-desc">Top 20品牌与Last 20品牌销售数据对比分析</p>
                     </div>
-                    <v-chart class="chart" :option="dashOpt1" />
+                    <div v-loading="brandLoading" element-loading-text="加载中...">
+                        <v-chart v-if="!brandLoading" class="chart" :option="brandSalesComparisonOptions" @legendselectchanged="handleLegendSelect" />
+                        <div v-else class="loading-placeholder">
+                            <el-empty description="数据加载中" />
+                        </div>
+                    </div>
                 </el-card>
             </el-col>
             <el-col :span="6">
                 <el-card shadow="hover">
                     <div class="card-header">
-                        <p class="card-header-title">品类分布</p>
-                        <p class="card-header-desc">最近一个月销售商品的品类情况</p>
+                        <p class="card-header-title">能源类型分布</p>
+                        <p class="card-header-desc">各种能源类型的车辆数量统计</p>
                     </div>
-                    <v-chart class="chart" :option="dashOpt2" />
+                    <div v-loading="energyLoading" element-loading-text="加载中...">
+                        <v-chart class="chart" :option="energyDistributionOptions" v-if="!energyLoading" />
+                        <div v-else class="loading-placeholder">
+                            <el-empty description="数据加载中" />
+                        </div>
+                    </div>
                 </el-card>
             </el-col>
         </el-row>
@@ -90,10 +100,13 @@
             <el-col :span="10">
                 <el-card shadow="hover" :body-style="{ height: '400px' }">
                     <div class="card-header">
-                        <p class="card-header-title">渠道统计</p>
-                        <p class="card-header-desc">最近一个月的订单来源统计</p>
+                        <p class="card-header-title">城市销售分布</p>
+                        <p class="card-header-desc">各地级市销售数据统计</p>
                     </div>
-                    <v-chart class="map-chart" :option="mapOptions" />
+                    <div v-loading="cityLoading" element-loading-text="加载中...">
+                        <v-chart v-if="!cityLoading" class="map-chart" :option="citySalesOptions" @zr:click="handleMapClick" @globalout="handleMapGlobalOut" @datazoom="handleMapZoom" />
+                        <el-empty v-else-if="Object.keys(citySalesOptions).length === 0" description="暂无数据" />
+                    </div>
                 </el-card>
             </el-col>
             <el-col :span="7">
@@ -139,8 +152,12 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import VChart from 'vue-echarts';
-import { dashOpt1, dashOpt2, mapOptions } from './chart/options';
-import chinaMap from '@/utils/china';
+import { ref, onMounted } from 'vue';
+import { dashOpt1, dashOpt2, mapOptions, getEnergyDistributionOptions, getCitySalesOptions, getBrandSalesComparisonOptions } from './chart/options';
+import { fetchEnergyDistribution, fetchCitySales, fetchTopBrandSales, fetchLastBrandSales } from '@/api';
+// 导入本地地级市地图数据
+import chinaGeoJSON from '../utils/chinaCitys.geojson?raw';
+
 use([
     CanvasRenderer,
     BarChart,
@@ -153,7 +170,175 @@ use([
     VisualMapComponent,
     MapChart,
 ]);
-registerMap('china', chinaMap);
+
+// 使用本地地级市地图数据
+const mapData = ref(null);
+
+// 加载地图数据
+const loadMapData = () => {
+    try {
+        // 解析GeoJSON字符串为对象
+        const geoJSONData = JSON.parse(chinaGeoJSON);
+        // 使用本地地级市GeoJSON数据注册地图
+        registerMap('china', geoJSONData);
+        registerMap('chinaCity', geoJSONData); // 统一使用相同的地图数据
+        mapData.value = geoJSONData;
+        // console.log('地级市地图数据加载成功');
+    } catch (error) {
+        console.error('加载地级市地图数据失败:', error);
+    }
+};
+
+// 响应式数据
+const energyLoading = ref(true);
+const energyDistributionOptions = ref({});
+const cityLoading = ref(true);
+const citySalesOptions = ref({});
+const brandLoading = ref(true);
+const brandSalesComparisonOptions = ref({});
+
+// 获取能源分布数据
+const loadEnergyDistribution = async () => {
+    try {
+        energyLoading.value = true;
+        const response = await fetchEnergyDistribution();
+        
+        // 检查响应状态码
+        if (response.status >= 200 && response.status < 300) {
+            // 使用后端返回的数据生成图表配置
+            // 注意：response.data 是后端返回的完整响应对象，包含 code、message、data 字段
+            energyDistributionOptions.value = getEnergyDistributionOptions(response.data.data);
+        } else {
+            console.error('获取能源分布数据失败，状态码:', response.status);
+            // 可以设置一个默认的图表配置或错误提示
+        }
+    } catch (error) {
+        console.error('获取能源分布数据时发生错误:', error);
+        // 可以设置一个默认的图表配置或错误提示
+    } finally {
+        energyLoading.value = false;
+    }
+};
+
+// 获取城市销售数据
+const loadCitySales = async () => {
+    try {
+        cityLoading.value = true;
+        const response = await fetchCitySales();
+        
+        // 检查响应状态码
+        if (response.status >= 200 && response.status < 300) {
+            // 使用后端返回的城市销售数据生成地图配置
+            // 注意：response.data.data 是城市销售数据数组
+            citySalesOptions.value = getCitySalesOptions(response.data.data);
+        } else {
+            console.error('获取城市销售数据失败，状态码:', response.status);
+            // 可以设置一个默认的图表配置或错误提示
+        }
+    } catch (error) {
+        console.error('获取城市销售数据时发生错误:', error);
+        // 可以设置一个默认的图表配置或错误提示
+    } finally {
+        cityLoading.value = false;
+    }
+};
+
+// 存储原始品牌数据用于动态切换
+let topBrandsData: { brand_name: string; total_sales: number }[] = [];
+let lastBrandsData: { brand_name: string; total_sales: number }[] = [];
+
+// 获取品牌销售对比数据
+const loadBrandSalesComparison = async () => {
+    try {
+        brandLoading.value = true;
+        
+        // 同时获取Top 20和Last 20品牌数据
+        const [topResponse, lastResponse] = await Promise.all([
+            fetchTopBrandSales(),
+            fetchLastBrandSales()
+        ]);
+        
+        // 检查两个API的响应状态码
+        if (topResponse.status >= 200 && topResponse.status < 300 && 
+            lastResponse.status >= 200 && lastResponse.status < 300) {
+            
+            // 存储原始数据
+            topBrandsData = topResponse.data.data;
+            lastBrandsData = lastResponse.data.data;
+            
+            // 使用后端返回的品牌数据生成对比图表配置
+            const originalOptions = getBrandSalesComparisonOptions(
+                topBrandsData,
+                lastBrandsData
+            );
+            
+            // 添加图例点击事件处理
+            originalOptions.legend = {
+                ...originalOptions.legend
+            };
+            
+            brandSalesComparisonOptions.value = originalOptions;
+        } else {
+            console.error('获取品牌销售数据失败，Top API状态码:', topResponse.status, 'Last API状态码:', lastResponse.status);
+            // 可以设置一个默认的图表配置或错误提示
+        }
+    } catch (error) {
+        console.error('获取品牌销售数据时发生错误:', error);
+        // 可以设置一个默认的图表配置或错误提示
+    } finally {
+        brandLoading.value = false;
+    }
+};
+
+// 处理图例点击事件，动态切换品牌名称
+const handleLegendSelect = (params: any) => {
+    if (params.name === 'Top 20品牌') {
+        // 切换到Top 20品牌
+        const newOptions = getBrandSalesComparisonOptions(topBrandsData, lastBrandsData);
+        // 更新y轴品牌名称为Top 20品牌
+        newOptions.yAxis.data = topBrandsData.map(item => item.brand_name);
+        // 只显示Top 20品牌的数据，隐藏Last 20品牌的数据
+        newOptions.series[0].data = topBrandsData.map(item => item.total_sales);
+        newOptions.series[1].data = []; // 清空Last 20数据，不显示
+        brandSalesComparisonOptions.value = newOptions;
+    } else if (params.name === 'Last 20品牌') {
+        // 切换到Last 20品牌
+        const newOptions = getBrandSalesComparisonOptions(topBrandsData, lastBrandsData);
+        // 更新y轴品牌名称为Last 20品牌
+        newOptions.yAxis.data = lastBrandsData.map(item => item.brand_name);
+        // 只显示Last 20品牌的数据，隐藏Top 20品牌的数据
+        newOptions.series[0].data = []; // 清空Top 20数据，不显示
+        newOptions.series[1].data = lastBrandsData.map(item => item.total_sales);
+        brandSalesComparisonOptions.value = newOptions;
+    }
+};
+
+// 处理地图点击事件（用于缩放检测）
+const handleMapClick = (params: any) => {
+    // 简单的缩放检测，不需要复杂的DOM操作
+    console.log('地图被点击或缩放');
+};
+
+// 处理鼠标移出地图事件
+const handleMapGlobalOut = (params: any) => {
+    // 简单的鼠标移出处理
+    // console.log('鼠标移出地图');
+};
+
+// 处理地图缩放事件
+const handleMapZoom = (params: any) => {
+    // 简单的缩放事件处理，使用ECharts内置的标签控制
+    console.log('地图缩放事件触发，缩放级别:', params.zoom);
+    // 标签显示由ECharts内置的labelLayout智能控制，无需额外处理
+};
+
+// 组件挂载时加载地图和数据
+onMounted(() => {
+    loadMapData();
+    loadEnergyDistribution();
+    loadCitySales();
+    loadBrandSalesComparison();
+});
 const activities = [
     {
         content: '收藏商品',
@@ -352,6 +537,7 @@ const ranks = [
 }
 .map-chart {
     width: 100%;
-    height: 350px;
+    height: 500px;
+    min-height: 500px;
 }
 </style>
