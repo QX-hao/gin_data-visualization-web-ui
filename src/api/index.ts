@@ -54,3 +54,11 @@ export const fetchLastBrandSales = () => {
         method: 'get'
     });
 };
+
+// 获取汽车级别分布数据
+export const fetchCarLevelDistribution = () => {
+    return request({
+        url: '/api/v1/public/car-level/distribution',
+        method: 'get'
+    });
+};

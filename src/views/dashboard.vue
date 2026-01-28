@@ -112,26 +112,28 @@
             <el-col :span="7">
                 <el-card shadow="hover" :body-style="{ height: '400px' }">
                     <div class="card-header">
-                        <p class="card-header-title">排行榜</p>
-                        <p class="card-header-desc">销售商品的热门榜单Top5</p>
+                        <p class="card-header-title">汽车级别排行榜</p>
+                        <p class="card-header-desc">各车型级别车辆数量分布（轮播展示）</p>
                     </div>
-                    <div>
-                        <div class="rank-item" v-for="(rank, index) in ranks">
-                            <div class="rank-item-avatar">{{ index + 1 }}</div>
-                            <div class="rank-item-content">
-                                <div class="rank-item-top">
-                                    <div class="rank-item-title">{{ rank.title }}</div>
-                                    <div class="rank-item-desc">销量：{{ rank.value }}</div>
+                    <div class="rank-container" ref="rankContainer">
+                        <transition-group name="rank-scroll" tag="div" class="rank-list">
+                            <div class="rank-item" v-for="rank in displayRanks" :key="rank.rank">
+                                <div class="rank-item-avatar" :style="{ background: rank.color }">{{ rank.displayRank }}</div>
+                                <div class="rank-item-content">
+                                    <div class="rank-item-top">
+                                        <div class="rank-item-title">{{ rank.title }}</div>
+                                        <div class="rank-item-desc">车辆数：{{ rank.value }}</div>
+                                    </div>
+                                    <el-progress
+                                        :show-text="false"
+                                        striped
+                                        :stroke-width="10"
+                                        :percentage="rank.percent"
+                                        :color="rank.color"
+                                    />
                                 </div>
-                                <el-progress
-                                    :show-text="false"
-                                    striped
-                                    :stroke-width="10"
-                                    :percentage="rank.percent"
-                                    :color="rank.color"
-                                />
                             </div>
-                        </div>
+                        </transition-group>
                     </div>
                 </el-card>
             </el-col>
@@ -154,7 +156,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 import VChart from 'vue-echarts';
 import { ref, onMounted } from 'vue';
 import { dashOpt1, dashOpt2, mapOptions, getEnergyDistributionOptions, getCitySalesOptions, getBrandSalesComparisonOptions } from './chart/options';
-import { fetchEnergyDistribution, fetchCitySales, fetchTopBrandSales, fetchLastBrandSales } from '@/api';
+import { fetchEnergyDistribution, fetchCitySales, fetchTopBrandSales, fetchLastBrandSales, fetchCarLevelDistribution } from '@/api';
 // 导入本地地级市地图数据
 import chinaGeoJSON from '../utils/chinaCitys.geojson?raw';
 
@@ -196,6 +198,12 @@ const cityLoading = ref(true);
 const citySalesOptions = ref({});
 const brandLoading = ref(true);
 const brandSalesComparisonOptions = ref({});
+
+// 汽车级别排行榜数据
+const carLevelRanks = ref([]);
+const currentRankIndex = ref(0);
+const displayRanks = ref([]);
+const rankInterval = ref(null);
 
 // 获取能源分布数据
 const loadEnergyDistribution = async () => {
@@ -332,12 +340,110 @@ const handleMapZoom = (params: any) => {
     // 标签显示由ECharts内置的labelLayout智能控制，无需额外处理
 };
 
+// 获取汽车级别分布数据
+const loadCarLevelDistribution = async () => {
+    try {
+        const response = await fetchCarLevelDistribution();
+        
+        if (response.status >= 200 && response.status < 300) {
+            const data = response.data.data;
+            
+            // 按车辆数量排序，计算百分比
+            const sortedData = data.sort((a, b) => b.car_count - a.car_count);
+            const maxCount = sortedData[0]?.car_count || 1;
+            
+            carLevelRanks.value = sortedData.map((item, index) => ({
+                title: item.car_level,
+                value: item.car_count,
+                percent: Math.round((item.car_count / maxCount) * 100),
+                color: getRankColor(index),
+                rank: index + 1 // 实际排名
+            }));
+            
+            // 初始化显示前5个
+            updateDisplayRanks();
+            
+            // 启动轮播
+            startRankCarousel();
+        } else {
+            console.error('获取汽车级别分布数据失败，状态码:', response.status);
+        }
+    } catch (error) {
+        console.error('获取汽车级别分布数据时发生错误:', error);
+    }
+};
+
+// 获取排名颜色
+const getRankColor = (index) => {
+    const colors = [
+        '#f25e43', // 红色 - 第一名
+        '#00bcd4', // 蓝色 - 第二名
+        '#64d572', // 绿色 - 第三名
+        '#e9a745', // 橙色 - 第四名
+        '#009688', // 青色 - 第五名
+        '#3f51b5', // 深蓝 - 第六名
+        '#9c27b0', // 紫色 - 第七名
+        '#ff9800', // 橙色 - 第八名
+        '#795548', // 棕色 - 第九名
+        '#607d8b'  // 灰色 - 第十名
+    ];
+    return colors[index % colors.length];
+};
+
+// 更新显示的排行榜数据（向上滚动效果）
+const updateDisplayRanks = () => {
+    const totalRanks = carLevelRanks.value.length;
+    if (totalRanks === 0) return;
+    
+    const displayCount = 5;
+    
+    // 获取当前要显示的5个数据，保持序号1-10的连续排序
+    const newDisplayRanks = [];
+    for (let i = 0; i < displayCount; i++) {
+        const actualIndex = (currentRankIndex.value + i) % totalRanks;
+        newDisplayRanks.push({
+            ...carLevelRanks.value[actualIndex],
+            displayRank: actualIndex + 1 // 显示实际排名（1-10）
+        });
+    }
+    
+    displayRanks.value = newDisplayRanks;
+};
+
+// 启动排行榜轮播（向上滚动效果）
+const startRankCarousel = () => {
+    if (rankInterval.value) {
+        clearInterval(rankInterval.value);
+    }
+    
+    rankInterval.value = setInterval(() => {
+        // 每次向上移动一行，实现滚动效果
+        currentRankIndex.value = (currentRankIndex.value + 1) % carLevelRanks.value.length;
+        updateDisplayRanks();
+    }, 2000); // 每2秒向上滚动一次
+};
+
+// 停止排行榜轮播
+const stopRankCarousel = () => {
+    if (rankInterval.value) {
+        clearInterval(rankInterval.value);
+        rankInterval.value = null;
+    }
+};
+
 // 组件挂载时加载地图和数据
 onMounted(() => {
     loadMapData();
     loadEnergyDistribution();
     loadCitySales();
     loadBrandSalesComparison();
+    loadCarLevelDistribution();
+});
+
+// 组件卸载时停止轮播
+import { onUnmounted } from 'vue';
+onUnmounted(() => {
+    stopRankCarousel();
 });
 const activities = [
     {
@@ -535,6 +641,42 @@ const ranks = [
     font-size: 14px;
     color: #999;
 }
+
+/* 排行榜容器样式 */
+.rank-container {
+    height: 320px;
+    overflow: hidden;
+    position: relative;
+}
+
+.rank-list {
+    position: relative;
+}
+
+/* 向上滚动动画 */
+.rank-scroll-move {
+    transition: transform 0.5s ease-in-out;
+}
+
+.rank-scroll-enter-active,
+.rank-scroll-leave-active {
+    transition: all 0.5s ease-in-out;
+}
+
+.rank-scroll-enter-from {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.rank-scroll-leave-to {
+    opacity: 0;
+    transform: translateY(-30px);
+}
+
+.rank-scroll-leave-active {
+    position: absolute;
+}
+
 .map-chart {
     width: 100%;
     height: 500px;
